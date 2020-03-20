@@ -15,6 +15,8 @@ noremap <Plug>(JumpMotion)[ <Cmd>call JumpMotion('[[')<CR>
 noremap <Plug>(JumpMotion)] <Cmd>call JumpMotion(']]')<CR>
 noremap <Plug>(JumpMotion)/ <Cmd>call JumpMotion("/\<lt>CR>")<CR>
 noremap <Plug>(JumpMotion)? <Cmd>call JumpMotion("?\<lt>CR>")<CR>
+noremap <Plug>(JumpMotion)f <Cmd>call JumpMotion('f' . nr2char(getchar()))<CR>
+noremap <Plug>(JumpMotion)F <Cmd>call JumpMotion('F' . nr2char(getchar()))<CR>
 nnoremap <Plug>(JumpMotion)i <Cmd>call JumpMotion("!/^\\s*\\zs$\<lt>CR>", 'startinsert')<CR>
 nnoremap <Plug>(JumpMotion)o <Cmd>call JumpMotion("!/^\\s*\\zs$\<lt>CR>", 'call feedkeys("o")')<CR>
 nnoremap <Plug>(JumpMotion)O <Cmd>call JumpMotion("!/^\\s*\\zs$\<lt>CR>", 'call feedkeys("O")')<CR>
