@@ -69,7 +69,7 @@ if !hlexists('JumpMotion')
 endif
 
 if !exists('*JumpMotionKey')
-  " [{keys to press}, {displayed label}] for @nth match.
+  " Return [{keys-to-press}, {displayed-label}] for @nth match.
   function JumpMotionKey(nth) abort
     let alphabet = get(g:, 'jumpmotion_abc', 'abcdefghijklmnopqrstuvwxyz')
     let nth = a:nth
@@ -84,7 +84,7 @@ if !exists('*JumpMotionKey')
   endfunction
 endif
 
-" JumpMotion([cmd-before ,] {motion} [, cmd-after])
+" Usage: JumpMotion([cmd-before ,] {motion} [, cmd-after])
 function JumpMotion(...) abort range
   let before = a:0 >=# 3 ? a:1 : ''
   let motion = a:0 >=# 3 ? a:2 : a:1
