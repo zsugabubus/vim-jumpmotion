@@ -9,17 +9,19 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 if !hasmapto('<Plug>(JumpMotion)')
-  for lhs in ['<Space>', 's', '<Leader><Leader>', '<Leader><Space>', '<Leader>s']
-    if empty(maparg(lhs))
-      execute 'map <unique>' lhs '<Plug>(JumpMotion)'
+  for s:lhs in ['<Space>', 's', '<Leader><Leader>', '<Leader><Space>', '<Leader>s']
+    if empty(maparg(s:lhs))
+      execute 'map <unique>' s:lhs '<Plug>(JumpMotion)'
       break
     endif
   endfor
+  unlet s:lhs
 endif
 
-for motion in split('wWbBeEjk(){}*#,;nN', '\zs')
-  execute 'noremap <Plug>(JumpMotion)' . motion . ' <Cmd>call JumpMotion("' . motion . '")<CR>'
+for s:motion in split('wWbBeEjk(){}*#,;nN', '\zs')
+  execute 'noremap <Plug>(JumpMotion)' . s:motion . ' <Cmd>call JumpMotion("' . s:motion . '")<CR>'
 endfor
+unlet s:motion
 map <Plug>(JumpMotion)d <Plug>(JumpMotion)J
 map <Plug>(JumpMotion)u <Plug>(JumpMotion)K
 noremap <Plug>(JumpMotion)J <Cmd>call JumpMotion('/\v%(^<bar>\S.*)@<=%>' . (line('.') + 9) . 'l%' . virtcol('.') . "v.%(.*\\S<bar>$)@=\<lt>CR>")<CR>
