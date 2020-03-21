@@ -9,4 +9,4 @@ supports before/after actions. Batteries included.
 - I’m bored.
 - `vim-easymotion` was noticeably slow in some of my use cases.
 - `vim-easymotion` dies from very long lines.
-- `vim-easymotion` is 13K lines and several megabytes.
+- `vim-easymotion` is +10K lines and several megabytes.
