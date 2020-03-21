@@ -99,24 +99,24 @@ function JumpMotion(...) abort range
   let oldcol = curcol
   let mode = mode(1)
 
-  " Go to normal mode.
-  execute "normal! \<Esc>"
-  execute before
+  let oldws = &wrapscan
+  let oldve = &virtualedit
+  let oldma = &modifiable
+  let oldro = &readonly
+  let oldspell = &spell
+  let oldul = &undolevels
+  let oldmod = &modified
+
+  setlocal nowrapscan virtualedit=all modifiable noreadonly nospell
+  if oldul ==# 0
+    " Otherwise don’t touch it.
+    setlocal undolevels=1
+  endif
 
   try
-    let oldws = &wrapscan
-    let oldve = &virtualedit
-    let oldma = &modifiable
-    let oldro = &readonly
-    let oldspell = &spell
-    let oldul = &undolevels
-    let oldmod = &modified
-
-    setlocal nowrapscan virtualedit=all modifiable noreadonly nospell
-    if oldul ==# 0
-      " Otherwise don’t touch it.
-      setlocal undolevels=1
-    endif
+    " Go to normal mode.
+    execute "normal! \<Esc>"
+    execute before
 
     while 1
       if exists('l:lnum')
