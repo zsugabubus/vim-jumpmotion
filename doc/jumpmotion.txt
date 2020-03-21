@@ -49,7 +49,8 @@ CONFIGURATION					*jumpmotion-configuration*
 JumpMotionKey({nth})			*JumpMotionKey()* *g:jumpmotion_abc*
 		Return [{keys-to-press}, {displayed-label}] for {nth} match.
 
-		Default implementation generates strings from |jumpmotion_abc|.
+		Default implementation generates words using |jumpmotion_abc|
+		alphabet.
 
 JumpMotion	First letter of labels.			*hl-JumpMotion*
 >
