@@ -176,21 +176,26 @@ function JumpMotion(...) abort range
       \})
     endwhile
 
-    try
-      let undofile = undofile(expand('%'))
-      let deleundofile = !empty(&buftype)
-      execute 'wundo!' fnameescape(undofile)
-    catch
-      try
-        let undofile = tempname()
-        let deleundofile = 1
-        execute 'wundo!' fnameescape(undofile)
-      catch /Invalid in command-line window;/
-        unlet! undofile
-      endtry
-    endtry
-
     nohlsearch
+
+    if undotree().seq_last ># 0
+      try
+        let undofile = undofile(expand('%'))
+        let deleundofile = !empty(&buftype)
+        execute 'wundo!' fnameescape(undofile)
+      catch
+        try
+          let undofile = tempname()
+          let deleundofile = 1
+          execute 'wundo!' fnameescape(undofile)
+        catch /Invalid in command-line window;/
+          unlet! undofile
+        endtry
+      endtry
+    else
+      " We need one undo.
+      setlocal undolevels=1
+    endif
 
     while len(targets) ># 1
       let matches = []
@@ -280,6 +285,10 @@ function JumpMotion(...) abort range
       if deleundofile
         call delete(undofile)
       endif
+    elseif &undolevels ==# 1
+      " Clear all history.
+      setlocal undolevels=-1
+      call setline(1, getline(1))
     endif
 
     keepjumps call winrestview(view)
