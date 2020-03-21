@@ -149,11 +149,7 @@ function JumpMotion(...) abort range
 
       " Skip folded lines.
       if foldclosed(lnum) !=# -1
-        let linewant = forward ? foldclosedend(lnum) + 1 : foldclosed(lnum) - 1
-        call cursor(linewant, 1)
-        if line('.') !=# linewant
-          break
-        endif
+        call cursor(forward ? foldclosedend(lnum) + 1 : foldclosed(lnum) - 1, 1)
         continue
       endif
 
