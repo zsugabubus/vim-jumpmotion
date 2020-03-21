@@ -36,10 +36,12 @@ noremap <Plug>(JumpMotion)$ <Cmd>call JumpMotion(':' . line('w0'), "$", '')<CR>
 noremap <Plug>(JumpMotion)0 <Cmd>call JumpMotion(':' . line('w0'), "0", '')<CR>
 noremap <Plug>(JumpMotion)^ <Cmd>call JumpMotion(':' . line('w0'), "^", '')<CR>
 noremap <Plug>(JumpMotion)_ <Cmd>call JumpMotion(':' . line('w0'), "_", '')<CR>
-nnoremap <Plug>(JumpMotion)i <Cmd>call JumpMotion(':' . (line('w0') - 1), "/^\\s*\\zs$\<lt>CR>", 'startinsert')<CR>
-nnoremap <Plug>(JumpMotion)I <Cmd>call JumpMotion(':' . (line('w0') - 1), "/^\\s*\\zs\<lt>CR>", 'startinsert')<CR>
-nnoremap <Plug>(JumpMotion)o <Cmd>call JumpMotion(':' . (line('w0') - 1), "/^\\s*\\zs$\<lt>CR>", 'call feedkeys("o")')<CR>
-nnoremap <Plug>(JumpMotion)O <Cmd>call JumpMotion(':' . (line('w0') - 1), "/^\\s*\\zs$\<lt>CR>", 'call feedkeys("O")')<CR>
+nnoremap <Plug>(JumpMotion)i <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs$\<lt>CR>", 'startinsert')<CR>
+nnoremap <Plug>(JumpMotion)I <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs\<lt>CR>", 'startinsert')<CR>
+map <Plug>(JumpMotion)a <Plug>(JumpMotion)i
+nnoremap <Plug>(JumpMotion)A <Cmd>call JumpMotion(':' . line('w0'), "/\\S.*\\zs\<lt>CR>", 'startinsert!')<CR>
+nnoremap <Plug>(JumpMotion)o <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs$\<lt>CR>", 'call feedkeys("o")')<CR>
+nnoremap <Plug>(JumpMotion)O <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs$\<lt>CR>", 'call feedkeys("O")')<CR>
 noremap <Plug>(JumpMotion)p <Cmd>call JumpMotion("/\\V(\<lt>CR>")<CR>
 noremap <Plug>(JumpMotion)P <Cmd>call JumpMotion("?\\V(\<lt>CR>")<CR>
 noremap <Plug>(JumpMotion)b <Cmd>call JumpMotion("/\\V{\<lt>CR>")<CR>
@@ -81,9 +83,11 @@ function JumpMotion(...) abort range
   let view = winsaveview()
   let view.bottomline = line('w$')
   let view.rightcol = view.leftcol + winwidth(0) - 1
-  let oldlnum = line('.')
-  let oldcol = col('.')
-  let mode = mode()
+  let curlnum = line('.')
+  let curcol = col('.')
+  let oldlnum = curlnum
+  let oldcol = curcol
+  let mode = mode(1)
 
   " Go to normal mode.
   execute "normal! \<Esc>"
@@ -126,14 +130,14 @@ function JumpMotion(...) abort range
         break
       endif
 
+      " Ignore match at cursor position.
+      if curlnum ==# lnum && curcol ==# col
+        continue
+      endif
+
       " No more matches.
       if oldlnum ==# lnum && oldcol ==# col
-        let linewant = lnum + (forward ? 1 : -1)
-        call cursor(linewant, (forward ? 1 : view.rightcol))
-        if line('.') !=# linewant
-          break
-        endif
-        continue
+        break
       endif
 
       " Skip non-visible part of the screen.
@@ -221,6 +225,7 @@ function JumpMotion(...) abort range
 
           let chr = nr2char(getchar())
         catch
+          unlet targets
           return
         finally
           silent undo
@@ -235,6 +240,7 @@ function JumpMotion(...) abort range
       endtry
 
       if chr ==# "\<Esc>"
+        unlet targets
         return
       elseif chr ==# "\<CR>" || chr ==# ' '
         break
@@ -254,17 +260,6 @@ function JumpMotion(...) abort range
     endwhile
 
   finally
-    let &wrapscan = oldws
-    let &virtualedit = oldve
-    let &modifiable = oldma
-    let &readonly = oldro
-    let &spell = oldspell
-    let &undolevels = oldul
-
-    if mode ==? 'v' || mode ==# "\<C-v>"
-      normal gv
-    endif
-
     if exists('undofile')
       try
         silent execute 'rundo' fnameescape(undofile)
@@ -276,18 +271,30 @@ function JumpMotion(...) abort range
     endif
 
     keepjumps call winrestview(view)
-  endtry
 
-  try
-    let target = targets[0]
-  catch
-    echohl WarningMsg
-    echo 'No matches.'
-    echohl None
-    return
-  endtry
+    try
+      let target = targets[0]
+      call cursor(target.lnum, target.col)
+    catch
+    endtry
 
-  call setpos('.', [0, target.lnum, target.col])
+    if mode ==? 'v' || mode ==# "\<C-v>"
+      normal gv
+    elseif mode ==# 'i'
+      startinsert " Leave this comment here, otherwise syntax will be messed up.
+    elseif mode ==# 'R'
+      startreplace
+    elseif mode ==# 'Rv'
+      startgreplace
+    endif
+
+    let &wrapscan = oldws
+    let &virtualedit = oldve
+    let &modifiable = oldma
+    let &readonly = oldro
+    let &spell = oldspell
+    let &undolevels = oldul
+  endtry
 
   execute after
 endfunction
