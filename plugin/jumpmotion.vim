@@ -54,12 +54,19 @@ silent! noremap  <unique> <Plug>(JumpMotion)> <Cmd>call JumpMotion(':' . line('w
 " Deindentations.
 silent! noremap  <unique> <Plug>(JumpMotion)< <Cmd>call JumpMotion(':' . line('w0'), "/\\v^(\\s*)\\s+\\S.*\\n\\1\\zs\\_S\<lt>CR>", '')<CR>
 
-try
-  call matchdelete(matchaddpos('JumpMotion', []))
-catch /No such highlight group name:/
-  highlight JumpMotion     cterm=bold ctermfg=196 ctermbg=226
-  highlight JumpMotionTail cterm=NONE ctermfg=196 ctermbg=226
-endtry
+if !hlexists('JumpMotion')
+  function s:update_highlights() abort
+    highlight JumpMotion     cterm=bold ctermfg=196 ctermbg=226
+    highlight JumpMotionTail cterm=NONE ctermfg=196 ctermbg=226
+  endfunction
+
+  augroup JumpMotionHighlights
+    autocmd!
+    autocmd ColorScheme * call <SID>update_highlights()
+  augroup end
+
+  call s:update_highlights()
+endif
 
 if !exists('*JumpMotionKey')
   " [{keys to press}, {displayed label}] for @nth match.
@@ -210,7 +217,7 @@ function JumpMotion(...) abort range
           \], 99))
 
           let keytaillen = strlen(strcharpart(target.key[1], 1))
-          if keytaillen ># 0
+          if keytaillen ># 0 && hlexists('JumpMotionTail')
             call add(matches, matchaddpos('JumpMotionTail', [
             \  [target.lnum, target.col + coldiff + keyheadlen, keytaillen]
             \], 99))
