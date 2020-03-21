@@ -53,7 +53,7 @@ JumpMotionKey({nth})			*JumpMotionKey()* *g:jumpmotion_abc*
 		alphabet.
 
 JumpMotion	First letter of labels.			*hl-JumpMotion*
->
+
 JumpMotionTail	Other letters of labels.		*hl-JumpMotionTail*
 
 ==============================================================================
