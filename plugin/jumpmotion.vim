@@ -36,14 +36,23 @@ silent! noremap  <unique> <Plug>(JumpMotion)t <Cmd>call JumpMotion('t' . nr2char
 silent! noremap  <unique> <Plug>(JumpMotion)T <Cmd>call JumpMotion('T' . nr2char(getchar()))<CR>
 silent! noremap  <unique> <Plug>(JumpMotion)$ <Cmd>call JumpMotion(':' . line('w0'), "/\\m$\<lt>CR>", '')<CR>
 silent! noremap  <unique> <Plug>(JumpMotion)_ <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs\\S\<lt>CR>", '')<CR>
-silent! nnoremap <unique> <Plug>(JumpMotion)i <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs$\<lt>CR>", 'startinsert')<CR>
-silent! nnoremap <unique> <Plug>(JumpMotion)I <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs\<lt>CR>", 'startinsert')<CR>
-silent! nnoremap <unique> <Plug>(JumpMotion)A <Cmd>call JumpMotion(':' . line('w0'), "/\\S.*\\zs\<lt>CR>", 'startinsert!')<CR>
-silent! nnoremap <unique> <Plug>(JumpMotion)o <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs$\<lt>CR>", 'call feedkeys("o")')<CR>
-silent! nnoremap <unique> <Plug>(JumpMotion)O <Cmd>call JumpMotion(':' . line('w0'), "/^\\s*\\zs$\<lt>CR>", 'call feedkeys("O")')<CR>
-silent! noremap  <unique> <Plug>(JumpMotion)= <Cmd>call JumpMotion(':' . line('w0'), "/ \\zs= \<lt>CR>", '')<CR>
+silent! nnoremap <unique> <Plug>(JumpMotion)i <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs$\<lt>CR>", 'startinsert')<CR>
+silent! nnoremap <unique> <Plug>(JumpMotion)I <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs\<lt>CR>", 'startinsert')<CR>
+silent! nnoremap <unique> <Plug>(JumpMotion)A <Cmd>call JumpMotion(':' . line('w0'), "/\\m\\S.*\\zs\<lt>CR>", 'startinsert!')<CR>
+silent! nnoremap <unique> <Plug>(JumpMotion)o <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs$\<lt>CR>", 'call feedkeys("o")')<CR>
+silent! nnoremap <unique> <Plug>(JumpMotion)O <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs$\<lt>CR>", 'call feedkeys("O")')<CR>
+" Characters.
 silent! noremap  <unique> <Plug>(JumpMotion)c <Cmd>call JumpMotion(':' . line('w0'), '/\V' . escape(nr2char(getchar()), '/\') . "\<lt>CR>", '')<CR>
+" Two characters.
 silent! noremap  <unique> <Plug>(JumpMotion)s <Cmd>call JumpMotion(':' . line('w0'), '/\V' . escape(nr2char(getchar()) . nr2char(getchar()), '/\') . "\<lt>CR>", '')<CR>
+" Assignments.
+silent! noremap  <unique> <Plug>(JumpMotion)= <Cmd>call JumpMotion(':' . line('w0'), "/\\m[^~<lt>>=]\\zs=[=#?]\\@!\<lt>CR>", '')<CR>
+" Interesting symbols.
+silent! noremap  <unique> <Plug>(JumpMotion)+ <Cmd>call JumpMotion(':' . line('w0'), "/\\v%([<lt>>!\\-+%*/~&<bar>=,:;(){}[\\]\"'`.]{1,3}%(\\D<bar>$)<bar><%(or<bar>and<bar>not<bar>xor)><bar><begin<bar><end)\<lt>CR>", '')<CR>
+" Indentations.
+silent! noremap  <unique> <Plug>(JumpMotion)> <Cmd>call JumpMotion(':' . line('w0'), "/\\v%(^(\\s*)%($<bar>\\S))@<=.*\\n^\\1\\s+\\zs\<lt>CR>", '')<CR>
+" Deindentations.
+silent! noremap  <unique> <Plug>(JumpMotion)< <Cmd>call JumpMotion(':' . line('w0'), "/\\v^(\\s*)\\s+\\S.*\\n\\1\\zs\\_S\<lt>CR>", '')<CR>
 
 try
   call matchdelete(matchaddpos('JumpMotion', []))
