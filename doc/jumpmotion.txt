@@ -63,7 +63,7 @@ JumpMotionTail	Further characters of a label.		*hl-JumpMotionTail*
 		not, only the first letter of a label will be shown.
 
 ==============================================================================
-LICENSE							*commentr-license*
+LICENSE							*jumpmotion-license*
 
 Released under the GNU General Public License version v3.0 or later.
 
