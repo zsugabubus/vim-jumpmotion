@@ -52,9 +52,15 @@ JumpMotionKey({nth})			*JumpMotionKey()* *g:jumpmotion_abc*
 		Default implementation generates words using |jumpmotion_abc|
 		alphabet.
 
-JumpMotion	First letter of labels.			*hl-JumpMotion*
+JumpMotion	First character of a label.		*hl-JumpMotion*
 
-JumpMotionTail	Other letters of labels.		*hl-JumpMotionTail*
+		If not given, a red on yellow highlight will be used both for
+		|hl-JumpMotion| and |hl-JumpMotionTail|.
+
+JumpMotionTail	Further characters of a label.		*hl-JumpMotionTail*
+
+		If |hl-JumpMotion| is specified but |hl-JumpMotionTail| is
+		not, only the first letter of a label will be shown.
 
 ==============================================================================
 LICENSE							*commentr-license*
