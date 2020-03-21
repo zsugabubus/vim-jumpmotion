@@ -1,0 +1,63 @@
+*jumpmotion.txt*	Jump to anywhere in the window.
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+INTRO							*jumpmotion-intro*
+
+vim-jumpmotion is like an interactive [count]{motion}: You give it a {motion},
+vim-jumpmotion repeats it and labels each occurence in the window. Then you
+get prompted for [count] and you select one to jump to.
+
+==============================================================================
+COMMANDS					*jumpmotion-commands*
+
+JumpMotion([{cmd-before}, ] {motion} [, {cmd-after}])		*JumpMotion()*
+		(1) Executes {cmd-before}, (2) labels each occurrence of
+		{motion} in the window using |JumpMotionKey()|, (3) and after
+		user has successfully selected one, executes {cmd-after}.
+
+		Note that it is advised to use |<Cmd>| mapping because then
+		JumpMotion can operate in the original mode.
+		Example: >
+			noremap <Space>j <Cmd>call JumpMotion('j')<CR>
+<		It can be used in |Visual-mode| to adjust the selected area.
+
+		Note that if you want only {cmd-before} but not {cmd-after}
+		you must supply any empty string to {cmd-after}, otherwise
+		arguments would be ambiguous.  Example: >
+			call JumpMotion(':' . line('w0'), 'w', '')
+<		It does not count where we stand in the window. Highlighting
+		of words will always start from the first visible line on the
+		top.
+
+
+==============================================================================
+CONFIGURATION					*jumpmotion-configuration*
+
+<Plug>(JumpMotion)				*<Plug>(JumpMotion)*
+		Leader key for builtin mappings.
+
+		By default it gets mapped to the first unmapped lhs:
+		<Space>, s, <Leader><Leader>, <Leader><Space>, <Leader>s.
+
+		Example: >
+			map <Space> <Plug>(JumpMotion)
+<
+		For list of builtin mappings see "plugin/jumpmotion.vim".
+
+JumpMotionKey({nth})			*JumpMotionKey()* *g:jumpmotion_abc*
+		Return [{keys-to-press}, {displayed-label}] for {nth} match.
+
+		Default implementation generates strings from |jumpmotion_abc|.
+
+JumpMotion	First letter of labels.			*hl-JumpMotion*
+>
+JumpMotionTail	Other letters of labels.		*hl-JumpMotionTail*
+
+==============================================================================
+LICENSE							*commentr-license*
+
+Released under the GNU General Public License version v3.0 or later.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:nowrap
