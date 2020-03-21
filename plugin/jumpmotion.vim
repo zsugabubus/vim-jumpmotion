@@ -134,6 +134,8 @@ function JumpMotion(...) abort range
 
       " Ignore match at cursor position.
       if curlnum ==# lnum && curcol ==# col
+        let curlnum = 0
+        let curcol = 0
         continue
       endif
 
