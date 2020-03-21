@@ -213,9 +213,9 @@ function JumpMotion(...) abort range
         endfor
 
         try
-          execute 'normal! ' . edit
+          keepjumps execute 'normal! ' . edit
 
-          call winrestview(view)
+          keepjumps call winrestview(view)
           let &modified = oldmod
           redraw
 
@@ -275,7 +275,7 @@ function JumpMotion(...) abort range
       endif
     endif
 
-    call winrestview(view)
+    keepjumps call winrestview(view)
   endtry
 
   try
