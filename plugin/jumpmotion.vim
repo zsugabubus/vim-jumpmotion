@@ -33,10 +33,10 @@ noremap <Plug>(JumpMotion)f <Cmd>call JumpMotion('f' . nr2char(getchar()))<CR>
 noremap <Plug>(JumpMotion)F <Cmd>call JumpMotion('F' . nr2char(getchar()))<CR>
 noremap <Plug>(JumpMotion)t <Cmd>call JumpMotion('t' . nr2char(getchar()))<CR>
 noremap <Plug>(JumpMotion)T <Cmd>call JumpMotion('T' . nr2char(getchar()))<CR>
-noremap <Plug>(JumpMotion)$ <Cmd>call JumpMotion(':' . (line('w0') - 1), "$", '')<CR>
-noremap <Plug>(JumpMotion)0 <Cmd>call JumpMotion(':' . (line('w0') - 1), "0", '')<CR>
-noremap <Plug>(JumpMotion)^ <Cmd>call JumpMotion(':' . (line('w0') - 1), "^", '')<CR>
-noremap <Plug>(JumpMotion)_ <Cmd>call JumpMotion(':' . (line('w0') - 1), "_", '')<CR>
+noremap <Plug>(JumpMotion)$ <Cmd>call JumpMotion(':' . line('w0'), "$", '')<CR>
+noremap <Plug>(JumpMotion)0 <Cmd>call JumpMotion(':' . line('w0'), "0", '')<CR>
+noremap <Plug>(JumpMotion)^ <Cmd>call JumpMotion(':' . line('w0'), "^", '')<CR>
+noremap <Plug>(JumpMotion)_ <Cmd>call JumpMotion(':' . line('w0'), "_", '')<CR>
 nnoremap <Plug>(JumpMotion)i <Cmd>call JumpMotion(':' . (line('w0') - 1), "/^\\s*\\zs$\<lt>CR>", 'startinsert')<CR>
 nnoremap <Plug>(JumpMotion)I <Cmd>call JumpMotion(':' . (line('w0') - 1), "/^\\s*\\zs\<lt>CR>", 'startinsert')<CR>
 nnoremap <Plug>(JumpMotion)o <Cmd>call JumpMotion(':' . (line('w0') - 1), "/^\\s*\\zs$\<lt>CR>", 'call feedkeys("o")')<CR>
