@@ -112,10 +112,10 @@ function JumpMotion(...) abort range
     let oldul = &undolevels
     let oldmod = &modified
 
-    set nowrapscan virtualedit=all modifiable noreadonly nospell
+    setlocal nowrapscan virtualedit=all modifiable noreadonly nospell
     if oldul ==# 0
       " Otherwise don’t touch it.
-      set undolevels=1
+      setlocal undolevels=1
     endif
 
     while 1
@@ -237,7 +237,7 @@ function JumpMotion(...) abort range
           keepjumps execute 'normal! ' . edit
 
           keepjumps call winrestview(view)
-          let &modified = oldmod
+          let &l:modified = oldmod
           redraw
 
           let chr = nr2char(getchar())
@@ -309,12 +309,12 @@ function JumpMotion(...) abort range
       startgreplace
     endif
 
-    let &wrapscan = oldws
-    let &virtualedit = oldve
-    let &modifiable = oldma
-    let &readonly = oldro
-    let &spell = oldspell
-    let &undolevels = oldul
+    let &l:wrapscan = oldws
+    let &l:virtualedit = oldve
+    let &l:modifiable = oldma
+    let &l:readonly = oldro
+    let &l:spell = oldspell
+    let &l:undolevels = oldul
   endtry
 
   execute after
