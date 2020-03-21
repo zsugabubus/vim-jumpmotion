@@ -214,7 +214,7 @@ function JumpMotion(...) abort range
 
           let oldtext = strcharpart(strpart(line, target.col - 1), 0, keywidth)
           let coldiff += strlen(target.key[1]) - strlen(oldtext)
-          let edit .= target.lnum . 'G' . target.vcol . '|c' . keywidth . 'l' . escape(target.key[1], '\') . "\<Esc>"
+          let edit .= target.lnum . 'G' . target.vcol . '|"_c' . keywidth . 'l' . escape(target.key[1], '\') . "\<Esc>"
         endfor
 
         try
