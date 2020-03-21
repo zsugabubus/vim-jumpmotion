@@ -8,10 +8,6 @@ endif
 let s:save_cpo = &cpo
 set cpo&vim
 
-for motion in split('wWbBeEjk(){}*#,;nN', '\zs')
-  execute 'noremap <Plug>(JumpMotion)' . motion . ' <Cmd>call JumpMotion("' . motion . '")<CR>'
-endfor
-
 if !hasmapto('<Plug>(JumpMotion)')
   for lhs in ['<Space>', 's', '<Leader><Leader>', '<Leader><Space>', '<Leader>s']
     if empty(maparg(lhs))
@@ -21,6 +17,9 @@ if !hasmapto('<Plug>(JumpMotion)')
   endfor
 endif
 
+for motion in split('wWbBeEjk(){}*#,;nN', '\zs')
+  execute 'noremap <Plug>(JumpMotion)' . motion . ' <Cmd>call JumpMotion("' . motion . '")<CR>'
+endfor
 map <Plug>(JumpMotion)d <Plug>(JumpMotion)J
 map <Plug>(JumpMotion)u <Plug>(JumpMotion)K
 noremap <Plug>(JumpMotion)J <Cmd>call JumpMotion('/\v%(^<bar>\S.*)@<=%>' . (line('.') + 9) . 'l%' . virtcol('.') . "v.%(.*\\S<bar>$)@=\<lt>CR>")<CR>
