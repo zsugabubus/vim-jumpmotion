@@ -56,8 +56,8 @@ silent! noremap  <unique> <Plug>(JumpMotion)< <Cmd>call JumpMotion(':' . line('w
 
 if !hlexists('JumpMotion')
   function s:update_highlights() abort
-    highlight JumpMotion     cterm=bold ctermfg=196 ctermbg=226
-    highlight JumpMotionTail cterm=NONE ctermfg=196 ctermbg=226
+    highlight JumpMotion     cterm=bold ctermfg=196 ctermbg=226 gui=bold guifg=#ff0000 guibg=#ffff00
+    highlight JumpMotionTail cterm=NONE ctermfg=196 ctermbg=226 gui=NONE guifg=#ff0000 guibg=#ffff00
   endfunction
 
   augroup JumpMotionHighlights
