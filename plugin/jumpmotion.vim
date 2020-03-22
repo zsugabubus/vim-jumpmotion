@@ -248,7 +248,7 @@ function JumpMotion(...) abort range
         endfor
 
         try
-          keepjumps execute 'normal! ' . edit
+          noautocmd keepjumps execute 'normal! ' edit
 
           keepjumps call winrestview(view)
           let &l:modified = oldmod
@@ -259,7 +259,7 @@ function JumpMotion(...) abort range
           unlet targets
           return
         finally
-          silent undo
+          noautocmd silent undo
         endtry
 
       catch
@@ -302,7 +302,7 @@ function JumpMotion(...) abort range
     elseif &undolevels ==# 1
       " Clear all history.
       setlocal undolevels=-1
-      call setline(1, getline(1))
+      noautocmd call setline(1, getline(1))
     endif
 
     keepjumps call winrestview(view)
