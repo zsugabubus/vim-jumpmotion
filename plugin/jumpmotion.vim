@@ -153,14 +153,16 @@ function JumpMotion(...) abort range
         break
       endif
 
-      " Skip non-visible part of the screen.
-      if view.rightcol <# vcol
-        call cursor(lnum, forward ? col('$') : view.rightcol)
-        continue
-      endif
-      if vcol <# view.leftcol
-        call cursor(lnum, forward ? view.leftcol : 1)
-        continue
+      if !&wrap
+        " Skip non-visible part of the screen.
+        if view.rightcol <# vcol
+          call cursor(lnum, forward ? col('$') : view.rightcol)
+          continue
+        endif
+        if vcol <# view.leftcol
+          call cursor(lnum, forward ? view.leftcol : 1)
+          continue
+        endif
       endif
 
       " Skip folded lines.
