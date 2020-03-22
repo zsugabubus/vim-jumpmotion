@@ -297,6 +297,9 @@ function JumpMotion(...) abort range
       let target = targets[0]
       call cursor(target.lnum, target.col)
     catch
+      echohl ErrorMsg
+      echo 'No matches.'
+      echohl None
     endtry
 
     if mode ==? 'v' || mode ==# "\<C-v>"
