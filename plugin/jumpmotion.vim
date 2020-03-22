@@ -118,6 +118,7 @@ function JumpMotion(...) abort range
     execute "normal! \<Esc>"
     execute before
 
+    " Repeat `motion` and generate `targets`.
     while 1
       if exists('l:lnum')
         let oldlnum = lnum
@@ -214,6 +215,7 @@ function JumpMotion(...) abort range
             let coldiff = 0
             let oldlnum = target.lnum
             let line = getline(target.lnum)
+            let edit .= target.lnum . 'G'
           endif
 
           let keyheadlen = strlen(strcharpart(target.key[1], 0, 1))
@@ -230,7 +232,7 @@ function JumpMotion(...) abort range
 
           let oldtext = strcharpart(strpart(line, target.col - 1), 0, keywidth)
           let coldiff += strlen(target.key[1]) - strlen(oldtext)
-          let edit .= target.lnum . 'G' . target.vcol . '|"_c' . keywidth . 'l' . escape(target.key[1], '\') . "\<Esc>"
+          let edit .= target.vcol . '|gR' . target.key[1] . "\<Esc>"
         endfor
 
         try
