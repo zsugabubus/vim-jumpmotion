@@ -17,12 +17,6 @@ JumpMotion([{cmd-before}, ] {motion} [, {cmd-after}])		*JumpMotion()*
 		{motion} in the window using |JumpMotionKey()|, (3) and after
 		user has successfully selected one, executes {cmd-after}.
 
-		Note that it is advised to use |<Cmd>| mapping because then
-		JumpMotion can operate in the original mode.
-		Example: >
-			noremap <Space>j <Cmd>call JumpMotion('j')<CR>
-<		It can be used in |Visual-mode| to adjust the selected area.
-
 		Note that if you want only {cmd-before} but not {cmd-after}
 		you must supply any empty string to {cmd-after}, otherwise
 		arguments would be ambiguous.  Example: >
@@ -31,6 +25,11 @@ JumpMotion([{cmd-before}, ] {motion} [, {cmd-after}])		*JumpMotion()*
 		of words will always start from the first visible line on the
 		top.
 
+		Note that if you are using NeoVim it is advised to use |<Cmd>|
+		mapping so JumpMotion can operate in the original mode.
+		Example: >
+			noremap <Space>j <Cmd>call JumpMotion('j')<CR>
+<		It can be used in |Visual-mode| to adjust the selected area.
 
 ==============================================================================
 CONFIGURATION					*jumpmotion-configuration*
