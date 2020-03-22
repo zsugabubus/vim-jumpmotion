@@ -315,6 +315,7 @@ function JumpMotion(...) abort range
     let &l:readonly = oldro
     let &l:spell = oldspell
     let &l:undolevels = oldul
+    let &l:modified = oldmod
   endtry
 
   execute after
