@@ -118,10 +118,11 @@ function JumpMotion(...) abort range
   let oldmod = &modified
 
   setlocal nowrapscan virtualedit=all modifiable noreadonly nospell
-  if oldul ==# 0
-    " Otherwise do not touch it.
-    setlocal undolevels=1
-  endif
+  " Add one extra undo level for two reasons:
+  " - If undo file could not be created, we can push out a history entry
+  "   if history is full.
+  " - Ensure we can use :undo even if user set -1 (no history at all).
+  let &l:undolevels=oldul + 1
 
   try
     " Go to normal mode.
@@ -206,8 +207,8 @@ function JumpMotion(...) abort range
         endtry
       endtry
     else
-      " We need one undo.
-      setlocal undolevels=1
+      " History is empty but we need :undo.
+      setlocal undolevels=0
     endif
 
     while len(targets) ># 1
@@ -248,7 +249,7 @@ function JumpMotion(...) abort range
         endfor
 
         try
-          noautocmd keepjumps execute 'normal! ' edit
+          noautocmd keepjumps execute 'normal!' edit
 
           keepjumps call winrestview(view)
           let &l:modified = oldmod
@@ -299,9 +300,11 @@ function JumpMotion(...) abort range
       if deleundofile
         call delete(undofile)
       endif
-    elseif &undolevels ==# 1
-      " Clear all history.
+    elseif &undolevels ==# 0
+      " Clear all history. We only do this if there was no undo history,
+      " or original 'undolevels' was -1.
       setlocal undolevels=-1
+      " Do some idempotent change.
       noautocmd call setline(1, getline(1))
     endif
 
