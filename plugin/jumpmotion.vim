@@ -310,6 +310,10 @@ function JumpMotion(...) abort range
 
     keepjumps call winrestview(view)
 
+    if mode ==? 'v' || mode ==# "\<C-v>"
+      normal gv
+    endif
+
     try
       let target = targets[0]
       call cursor(target.lnum, target.col)
@@ -319,9 +323,7 @@ function JumpMotion(...) abort range
       echohl None
     endtry
 
-    if mode ==? 'v' || mode ==# "\<C-v>"
-      normal gv
-    elseif mode ==# 'i'
+    if mode ==# 'i'
       startinsert " Leave this comment here, otherwise syntax will be messed up.
     elseif mode ==# 'R'
       startreplace
