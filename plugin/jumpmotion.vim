@@ -94,7 +94,7 @@ if !exists('*JumpMotionKey')
   endfunction
 endif
 
-" Usage: JumpMotion([cmd-before ,] {motion} [, cmd-after])
+" Usage: JumpMotion([{cmd-before} ,] {motion} [, {cmd-after}])
 function JumpMotion(...) abort range
   let before = a:0 >=# 3 ? a:1 : ''
   let motion = a:0 >=# 3 ? a:2 : a:1
@@ -223,19 +223,29 @@ function JumpMotion(...) abort range
 
       try
         for target in targets
-          let keywidth = strdisplaywidth(target.key[1], target.vcol)
           if target.lnum !=# oldlnum
             let coldiff = 0
             let oldlnum = target.lnum
+            let oldcol = target.col
+            let dir = 0
             let line = getline(target.lnum)
             let edit .= target.lnum . 'G'
+          elseif dir ==# 0
+            " Update direction only once per line.
+            let dir = target.col - oldcol
+            " Clear previous offset. We are moving backwards.
+            if dir <=# 0
+              let coldiff = 0
+            endif
           endif
 
+          " First character of label.
           let keyheadlen = strlen(strcharpart(target.key[1], 0, 1))
           call add(matches, matchaddpos('JumpMotion', [
           \  [target.lnum, target.col + coldiff, keyheadlen]
           \], 99))
 
+          " Second+ characters of label.
           let keytaillen = strlen(strcharpart(target.key[1], 1))
           if keytaillen ># 0 && hlexists('JumpMotionTail')
             call add(matches, matchaddpos('JumpMotionTail', [
@@ -243,8 +253,16 @@ function JumpMotion(...) abort range
             \], 99))
           endif
 
-          let oldtext = strcharpart(strpart(line, target.col - 1), 0, keywidth)
-          let coldiff += strlen(target.key[1]) - strlen(oldtext)
+          " If we moving forward in the line, we must adjust byte
+          " offsets of next labels.
+          if dir >=# 0
+            " How much cells will label consume?
+            let labelwidth = strdisplaywidth(target.key[1], target.vcol)
+            " Buffer text that will be overwritten by the label.
+            let buftext = strcharpart(strpart(line, target.col - 1), 0, labelwidth)
+            " Byte difference between old and new buffer text.
+            let coldiff += strlen(target.key[1]) - strlen(buftext)
+          endif
           let edit .= target.vcol . '|gR' . target.key[1] . "\<Esc>"
         endfor
 
