@@ -21,9 +21,10 @@ endif
 if has('nvim')
   command -nargs=+ JumpMotionMap silent! <args>
 else
-  " We lose functionality but cannot come up with a solution that could
-  " move cursor in visual mode in Vim. So just replace <Cmd> with :.
-  command -nargs=+ JumpMotionMap silent! execute substitute(<q-args>, '\V<lt>Cmd>', ':', '')
+  command -nargs=+ JumpMotionMap
+  \  silent! execute substitute('n'.<q-args>, '\V<lt>Cmd>', ':<C-u>let g:jumpmotion_mode="n"<lt>bar>:<C-u>', '')|
+  \  silent! execute substitute('v'.<q-args>, '\V<lt>Cmd>', ':<C-u>let g:jumpmotion_mode=visualmode()<lt>CR><lt>bar>:<C-u>', '')|
+  \  silent! execute substitute('i'.<q-args>, '\V<lt>Cmd>', ':<C-u>let g:jumpmotion_mode="i"<lt>bar>:<C-u>', '')
 endif
 
 for s:motion in split('wWbBeEjk(){}*#,;nN', '\zs')
@@ -105,9 +106,18 @@ function JumpMotion(...) abort range
   let view.rightcol = view.leftcol + winwidth(0) - 1
   let curlnum = line('.')
   let curcol = col('.')
+  let mode = get(g:, 'jumpmotion_mode', mode(1))
+  unlet! jumpmotion_mode
+  if has('nvim')
+    let reg = '.'
+  elseif mode ==? 'v' || mode ==# "\<C-v>"
+    let reg = line("'<") ==# curlnum ? "'<" : "'>"
+    let [curlnum, curcol] = getpos(reg)[1:2]
+  else
+    let reg = '.'
+  endif
   let oldlnum = curlnum
   let oldcol = curcol
-  let mode = mode(1)
 
   let oldws = &wrapscan
   let oldve = &virtualedit
@@ -328,26 +338,29 @@ function JumpMotion(...) abort range
 
     keepjumps call winrestview(view)
 
-    if mode ==? 'v' || mode ==# "\<C-v>"
+    if reg ==# '.' && (mode ==? 'v' || mode ==# "\<C-v>")
       normal gv
     endif
 
     try
       let target = targets[0]
-      call cursor(target.lnum, target.col)
+      call setpos(reg, [0, target.lnum, target.col, 0])
     catch
       echohl ErrorMsg
       echo 'No matches.'
       echohl None
+    finally
+      " Restore mode.
+      if reg !=# '.' && (mode ==? 'v' || mode ==# "\<C-v>")
+        normal gv
+      elseif mode ==# 'i'
+        startinsert " Leave this comment here, otherwise syntax will be messed up.
+      elseif mode ==# 'R'
+        startreplace
+      elseif mode ==# 'Rv'
+        startgreplace
+      endif
     endtry
-
-    if mode ==# 'i'
-      startinsert " Leave this comment here, otherwise syntax will be messed up.
-    elseif mode ==# 'R'
-      startreplace
-    elseif mode ==# 'Rv'
-      startgreplace
-    endif
 
     let &l:wrapscan = oldws
     let &l:virtualedit = oldve
