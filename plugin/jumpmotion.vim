@@ -147,7 +147,7 @@ function JumpMotion(...) abort range
       endif
 
       try
-        keepjumps keeppattern silent execute 'normal! ' . motion
+        keepjumps keeppattern silent execute 'normal ' . motion
       catch
         break
       endtry
