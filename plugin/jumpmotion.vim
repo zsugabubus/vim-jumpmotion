@@ -33,8 +33,8 @@ endfor
 unlet s:motion
 JumpMotionMap map      <unique> <Plug>(JumpMotion)d <Plug>(JumpMotion)J
 JumpMotionMap map      <unique> <Plug>(JumpMotion)u <Plug>(JumpMotion)K
-JumpMotionMap noremap  <unique> <Plug>(JumpMotion)J <Cmd>call JumpMotion('/\v%(^<bar>\S.*)@<=%>' . (line('.') + 9) . 'l%' . virtcol('.') . "v.%(.*\\S<bar>$)@=\<lt>CR>")<CR>
-JumpMotionMap noremap  <unique> <Plug>(JumpMotion)K <Cmd>call JumpMotion('?\v%(^<bar>\S.*)@<=%<' . (line('.') - 9) . 'l%' . virtcol('.') . "v.%(.*\\S<bar>$)@=\<lt>CR>")<CR>
+JumpMotionMap noremap  <unique> <Plug>(JumpMotion)J <Cmd>call JumpMotion('/\v%>' . (line('.') + 9) . 'l%' . virtcol('.') . "v\<lt>CR>")<CR>
+JumpMotionMap noremap  <unique> <Plug>(JumpMotion)K <Cmd>call JumpMotion('?\v%<' . (line('.') - 9) . 'l%' . virtcol('.') . "v\<lt>CR>")<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)[ <Cmd>call JumpMotion('[[')<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)] <Cmd>call JumpMotion(']]')<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)/ <Cmd>call JumpMotion("/\<lt>CR>")<CR>
@@ -45,11 +45,15 @@ JumpMotionMap noremap  <unique> <Plug>(JumpMotion)t <Cmd>call JumpMotion('t' . n
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)T <Cmd>call JumpMotion('T' . nr2char(getchar()))<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)$ <Cmd>call JumpMotion(':' . line('w0'), "/\\m$\<lt>CR>", '')<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)_ <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs\\S\<lt>CR>", '')<CR>
+JumpMotionMap noremap  <unique> <Plug>(JumpMotion)% <Cmd>call JumpMotion('%')<CR>
+JumpMotionMap noremap  <unique> <Plug>(JumpMotion)g% <Cmd>call JumpMotion('g%')<CR>
 JumpMotionMap nnoremap <unique> <Plug>(JumpMotion)i <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs$\<lt>CR>", 'startinsert')<CR>
 JumpMotionMap nnoremap <unique> <Plug>(JumpMotion)I <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs\<lt>CR>", 'startinsert')<CR>
 JumpMotionMap nnoremap <unique> <Plug>(JumpMotion)A <Cmd>call JumpMotion(':' . line('w0'), "/\\m\\S.*\\zs\<lt>CR>", 'startinsert!')<CR>
 JumpMotionMap nnoremap <unique> <Plug>(JumpMotion)o <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs$\<lt>CR>", 'call feedkeys("o")')<CR>
 JumpMotionMap nnoremap <unique> <Plug>(JumpMotion)O <Cmd>call JumpMotion(':' . line('w0'), "/\\m^\\s*\\zs$\<lt>CR>", 'call feedkeys("O")')<CR>
+" Numbers.
+JumpMotionMap nnoremap <unique> <Plug>(JumpMotion)0 <Cmd>call JumpMotion(':' . line('w0'), "/\\v0[xX]\\zs[0-9a-zA-Z]+<bar>0[bB]\\zs[01]+<bar>%(0\\zs)?%(\\d+\\.?)+\<lt>CR>", '')<CR>
 " Characters.
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)c <Cmd>call JumpMotion(':' . line('w0'), '/\V' . escape(nr2char(getchar()), '/\') . "\<lt>CR>", '')<CR>
 " Two characters.
