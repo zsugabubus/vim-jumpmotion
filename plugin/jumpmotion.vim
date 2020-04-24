@@ -192,12 +192,17 @@ function JumpMotion(...) abort range
         continue
       endif
 
-      call add(targets, {
+      let target = {
       \  'lnum': lnum,
       \  'col': col + max([vcol - virtcol('$'), 0]),
       \  'vcol': vcol,
       \  'key': g:JumpMotionKey(len(targets))
-      \})
+      \}
+      if !empty(targets) && targets[0].lnum ==# target.lnum && targets[0].col ==# target.col
+        " Cycle detected
+        break
+      endif
+      call add(targets, target)
     endwhile
 
     nohlsearch
