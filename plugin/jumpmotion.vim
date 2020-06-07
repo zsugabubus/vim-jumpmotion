@@ -23,7 +23,7 @@ if has('nvim')
 else
   command -nargs=+ JumpMotionMap
   \  silent! execute substitute('n'.<q-args>, '\V<lt>Cmd>', ':<C-u>let g:jumpmotion_mode="n"<lt>bar>:<C-u>', '')|
-  \  silent! execute substitute('v'.<q-args>, '\V<lt>Cmd>', ':<C-u>let g:jumpmotion_mode=visualmode()<lt>CR><lt>bar>:<C-u>', '')|
+  \  silent! execute substitute('x'.<q-args>, '\V<lt>Cmd>', ':<C-u>let g:jumpmotion_mode=visualmode()<lt>CR><lt>bar>:<C-u>', '')|
   \  silent! execute substitute('i'.<q-args>, '\V<lt>Cmd>', ':<C-u>let g:jumpmotion_mode="i"<lt>bar>:<C-u>', '')
 endif
 
