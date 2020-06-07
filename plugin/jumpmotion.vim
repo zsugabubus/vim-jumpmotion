@@ -130,8 +130,10 @@ function JumpMotion(...) abort range
   let oldspell = &spell
   let oldul = &undolevels
   let oldmod = &modified
+  let oldcole = &conceallevel
+  let oldtw = &textwidth " TODO: Why? (E.g. vim help)
 
-  setlocal nowrapscan virtualedit=all modifiable noreadonly nospell
+  setlocal nowrapscan virtualedit=all modifiable noreadonly nospell conceallevel=0 textwidth=0
   " Add one extra undo level for two reasons:
   " - If undo file could not be created, we can push out a history entry
   "   if history is full.
@@ -151,7 +153,7 @@ function JumpMotion(...) abort range
       endif
 
       try
-        keepjumps keeppattern silent execute 'normal ' . motion
+        keepjumps keeppattern silent execute 'normal' motion
       catch
         break
       endtry
@@ -290,6 +292,7 @@ function JumpMotion(...) abort range
 
           keepjumps call winrestview(view)
           let &l:modified = oldmod
+          let &l:readonly = oldro
           redraw
 
           let chr = nr2char(getchar())
@@ -378,6 +381,8 @@ function JumpMotion(...) abort range
     let &l:spell = oldspell
     let &l:undolevels = oldul
     let &l:modified = oldmod
+    let &l:conceallevel = oldcole
+    let &l:textwidth = oldtw
   endtry
 
   execute after
