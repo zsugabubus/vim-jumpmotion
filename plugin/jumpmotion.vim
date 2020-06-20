@@ -31,14 +31,18 @@ for s:motion in split('wWbBeEjk(){}*#,;nN', '\zs')
   execute 'JumpMotionMap noremap <unique> <Plug>(JumpMotion)' . s:motion . ' <Cmd>call JumpMotion("' . s:motion . '")<CR>'
 endfor
 unlet s:motion
+
+JumpMotionMap noremap  <unique> <Plug>(JumpMotion)g@ :<C-U>set opfunc=<SID>opfunc<CR>g@
+JumpMotionMap map      <silent> <Plug>(JumpMotion)v <Plug>(JumpMotion)g@v
 JumpMotionMap map      <unique> <Plug>(JumpMotion)d <Plug>(JumpMotion)J
 JumpMotionMap map      <unique> <Plug>(JumpMotion)u <Plug>(JumpMotion)K
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)J <Cmd>call JumpMotion('/\v%>' . (line('.') + 9) . 'l%' . virtcol('.') . "v\<lt>CR>")<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)K <Cmd>call JumpMotion('?\v%<' . (line('.') - 9) . 'l%' . virtcol('.') . "v\<lt>CR>")<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)[ <Cmd>call JumpMotion('[[')<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)] <Cmd>call JumpMotion(']]')<CR>
-JumpMotionMap noremap  <unique> <Plug>(JumpMotion)/ <Cmd>call JumpMotion("/\<lt>CR>")<CR>
-JumpMotionMap noremap  <unique> <Plug>(JumpMotion)? <Cmd>call JumpMotion("?\<lt>CR>")<CR>
+JumpMotionMap map      <silent> <Plug>(JumpMotion)/ <Plug>(JumpMotion)g@/
+JumpMotionMap map      <silent> <Plug>(JumpMotion)? <Plug>(JumpMotion)g@?
+JumpMotionMap map      <silent> <Plug>(JumpMotion): <Plug>(JumpMotion)g@:
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)f <Cmd>call JumpMotion('f' . nr2char(getchar()))<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)F <Cmd>call JumpMotion('F' . nr2char(getchar()))<CR>
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)t <Cmd>call JumpMotion('t' . nr2char(getchar()))<CR>
@@ -66,13 +70,13 @@ JumpMotionMap noremap  <unique> <Plug>(JumpMotion)+ <Cmd>call JumpMotion(':' . l
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)> <Cmd>call JumpMotion(':' . line('w0'), "/\\v%(^(\\s*)%($<bar>\\S))@<=.*\\n^\\1\\s+\\zs\<lt>CR>", '')<CR>
 " Deindentations.
 JumpMotionMap noremap  <unique> <Plug>(JumpMotion)< <Cmd>call JumpMotion(':' . line('w0'), "/\\v^(\\s*)\\s+\\S.*\\n\\1\\zs\\_S\<lt>CR>", '')<CR>
+JumpMotionMap map  <unique> <Plug>(JumpMotion)x <Plug>(JumpMotion)g@/0<CR>
 
 delcommand JumpMotionMap
 
 if !hlexists('JumpMotion')
   function s:update_highlights() abort
     highlight JumpMotion     cterm=bold ctermfg=196 ctermbg=226 gui=bold guifg=#ff0000 guibg=#ffff00
-    highlight JumpMotionTail cterm=NONE ctermfg=196 ctermbg=226 gui=NONE guifg=#ff0000 guibg=#ffff00
   endfunction
 
   augroup JumpMotionHighlights
@@ -99,8 +103,21 @@ if !exists('*JumpMotionKey')
   endfunction
 endif
 
+function! s:noop(type, ...) abort
+endfunction
+
+" Vim is fucking dumb.
+function! s:opfunc(type) abort
+  try
+    set opfunc=<SID>noop
+    call JumpMotion(':call cursor(0, col(".") + 1)'."\<CR>".'.:call cursor(line("'']"), col("'']"))'."\<CR>")
+  finally
+    set opfunc=
+  endtry
+endfunction
+
 " Usage: JumpMotion([{cmd-before} ,] {motion} [, {cmd-after}])
-function JumpMotion(...) abort range
+function! JumpMotion(...) abort range
   let before = a:0 >=# 3 ? a:1 : ''
   let motion = a:0 >=# 3 ? a:2 : a:1
   let after  = a:0 >=# 3 ? a:3 : a:0 >=# 2 ? a:1 : ''
@@ -124,21 +141,12 @@ function JumpMotion(...) abort range
   let oldcol = curcol
 
   let oldws = &wrapscan
-  let oldve = &virtualedit
-  let oldma = &modifiable
-  let oldro = &readonly
-  let oldspell = &spell
-  let oldul = &undolevels
-  let oldmod = &modified
   let oldcole = &conceallevel
-  let oldtw = &textwidth " TODO: Why? (E.g. vim help)
+  let oldcocu = &concealcursor
 
-  setlocal nowrapscan virtualedit=all modifiable noreadonly nospell conceallevel=0 textwidth=0
-  " Add one extra undo level for two reasons:
-  " - If undo file could not be created, we can push out a history entry
-  "   if history is full.
-  " - Ensure we can use :undo even if user set -1 (no history at all).
-  let &l:undolevels=oldul + 1
+  setlocal nowrapscan conceallevel=2 concealcursor=n
+  hi! clear Conceal
+  hi! link Conceal JumpMotion
 
   try
     " Go to normal mode.
@@ -213,94 +221,30 @@ function JumpMotion(...) abort range
 
     nohlsearch
 
-    if undotree().seq_last ># 0
-      try
-        let undofile = undofile(expand('%'))
-        let deleundofile = !empty(&buftype)
-        execute 'wundo!' fnameescape(undofile)
-      catch
-        try
-          let undofile = tempname()
-          let deleundofile = 1
-          execute 'wundo!' fnameescape(undofile)
-        catch /Invalid in command-line window;/
-          unlet! undofile
-        endtry
-      endtry
-    else
-      " History is empty but we need :undo.
-      setlocal undolevels=0
-    endif
-
     while len(targets) ># 1
       let matches = []
-      " Sequence of edit commands that add key labels to buffer.
-      let edit = ''
-      let oldlnum = 0
-      " Wanted and real difference in columns due to byte length
-      " differences between key labels and text that will be
-      " overwritten.
-      let coldiff = 0
 
       try
         for target in targets
-          if target.lnum !=# oldlnum
-            let coldiff = 0
-            let oldlnum = target.lnum
-            let oldcol = target.col
-            let dir = 0
-            let line = getline(target.lnum)
-            let edit .= target.lnum . 'G'
-          elseif dir ==# 0
-            " Update direction only once per line.
-            let dir = target.col - oldcol
-            " Clear previous offset. We are moving backwards.
-            if dir <=# 0
-              let coldiff = 0
-            endif
-          endif
-
-          " First character of label.
-          let keyheadlen = strlen(strcharpart(target.key[1], 0, 1))
-          call add(matches, matchaddpos('JumpMotion', [
-          \  [target.lnum, target.col + coldiff, keyheadlen]
-          \], 99))
-
-          " Second+ characters of label.
-          let keytaillen = strlen(strcharpart(target.key[1], 1))
-          if keytaillen ># 0 && hlexists('JumpMotionTail')
-            call add(matches, matchaddpos('JumpMotionTail', [
-            \  [target.lnum, target.col + coldiff + keyheadlen, keytaillen]
-            \], 99))
-          endif
-
-          " If we moving forward in the line, we must adjust byte
-          " offsets of next labels.
-          if dir >=# 0
-            " How much cells will label consume?
-            let labelwidth = strdisplaywidth(target.key[1], target.vcol)
-            " Buffer text that will be overwritten by the label.
-            let buftext = strcharpart(strpart(line, target.col - 1), 0, labelwidth)
-            " Byte difference between old and new buffer text.
-            let coldiff += strlen(target.key[1]) - strlen(buftext)
-          endif
-          let edit .= target.vcol . '|gR' . target.key[1] . "\<Esc>"
+          let key = target.key[1]
+          let col = target.col
+          while key != ""
+            call add(matches, matchaddpos('Conceal', [
+            \  [target.lnum, col, 1]
+            \], 99, -1, {'conceal': key}))
+            let col += 1
+            let key = strcharpart(key, 1)
+          endwhile
         endfor
 
         try
-          noautocmd keepjumps execute 'normal!' edit
-
           keepjumps call winrestview(view)
-          let &l:modified = oldmod
-          let &l:readonly = oldro
+          echo
           redraw
-
           let chr = nr2char(getchar())
         catch
           unlet targets
           return
-        finally
-          noautocmd silent undo
         endtry
 
       catch
@@ -332,24 +276,6 @@ function JumpMotion(...) abort range
     endwhile
 
   finally
-    if exists('undofile')
-      try
-        silent execute 'rundo' fnameescape(undofile)
-      catch /Invalid in command-line window;/
-      endtry
-      if deleundofile
-        call delete(undofile)
-      endif
-    elseif &undolevels ==# 0
-      " Clear all history. We only do this if there was no undo history,
-      " or original 'undolevels' was -1.
-      setlocal undolevels=-1
-      " Do some idempotent change.
-      noautocmd call setline(1, getline(1))
-    endif
-
-    keepjumps call winrestview(view)
-
     if reg ==# '.' && (mode ==? 'v' || mode ==# "\<C-v>")
       normal gv
     endif
@@ -374,15 +300,8 @@ function JumpMotion(...) abort range
       endif
     endtry
 
-    let &l:wrapscan = oldws
-    let &l:virtualedit = oldve
-    let &l:modifiable = oldma
-    let &l:readonly = oldro
-    let &l:spell = oldspell
-    let &l:undolevels = oldul
-    let &l:modified = oldmod
     let &l:conceallevel = oldcole
-    let &l:textwidth = oldtw
+    let &l:concealcursor = oldcocu
   endtry
 
   execute after
