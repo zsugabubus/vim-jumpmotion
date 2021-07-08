@@ -34,6 +34,10 @@ JumpMotion([{cmd-before}, ] {motion} [, {cmd-after}])		*JumpMotion()*
 ==============================================================================
 CONFIGURATION					*jumpmotion-configuration*
 
+g:jumpmotion_do_mappings			*g:jumpmotion_do_mappings*
+		Set to 0, to disable builtin mappings: >
+			let g:jumpmotion_do_mappings = 0
+<
 <Plug>(JumpMotion)				*<Plug>(JumpMotion)*
 		Leader key for builtin mappings.
 
