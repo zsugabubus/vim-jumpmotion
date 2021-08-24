@@ -8,7 +8,7 @@ endif
 let s:save_cpo = &cpo
 set cpo&vim
 
-if get('g:jumpmotion_do_mappings', 1) == 1 && !hasmapto('<Plug>(JumpMotion)')
+if get(g:, 'jumpmotion_do_mappings', 1) == 1 && !hasmapto('<Plug>(JumpMotion)')
   for s:lhs in ['<Space>', 's', '<Leader><Leader>', '<Leader><Space>', '<Leader>s']
     if empty(maparg(s:lhs))
       execute 'map <unique>' s:lhs '<Plug>(JumpMotion)'
