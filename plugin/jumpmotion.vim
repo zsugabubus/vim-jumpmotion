@@ -140,8 +140,9 @@ function! JumpMotion(...) abort range
   let oldlnum = curlnum
   let oldcol = curcol
 
-  let [oldws, oldcole, oldcocu, oldve] = [&ws, &cole, &cocu, &ve]
-  setlocal nowrapscan conceallevel=2 concealcursor=n virtualedit=
+  let [oldws, oldcole, oldcocu, oldve, oldlist] =
+    \ [&ws, &cole, &cocu, &ve, &list]
+  setlocal nowrapscan conceallevel=2 concealcursor=n virtualedit= nolist
   hi! clear Conceal
   hi! link Conceal JumpMotion
 
@@ -297,7 +298,8 @@ function! JumpMotion(...) abort range
       endif
     endtry
 
-    let [&l:ws, &l:cole, &l:cocu, &l:ve] = [oldws, oldcole, oldcocu, oldve]
+    let [&l:ws, &l:cole, &l:cocu, &l:ve, &l:list] =
+      \ [oldws, oldcole, oldcocu, oldve, oldlist]
   endtry
 
   execute after
