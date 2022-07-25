@@ -115,7 +115,7 @@ local function generate_targets(cmd, flags)
 
 	local target_set = {}
 
-	function add_win_targets()
+	local function add_win_targets()
 		local win = V.nvim_get_current_win()
 		local buf = V.nvim_win_get_buf(0)
 
