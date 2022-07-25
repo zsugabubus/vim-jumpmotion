@@ -154,8 +154,8 @@ local function generate_targets(cmd, flags)
 			end
 			target_set[target_id] = true
 
-			-- When out of the viewport on the left or the right sides skip
-			-- remaining line to avoid scanning it.
+			-- Avoid scanning remaining line when out of the viewport on the left or
+			-- on the right sides.
 			if
 				target.col < view.leftcol
 			then
@@ -170,7 +170,7 @@ local function generate_targets(cmd, flags)
 				goto continue
 			end
 
-			-- When out of the viewport on the top or bottom finish scanning.
+			-- Top scanning when out of the viewport on the top or on the bottom.
 			if
 				target.line < view.topline or
 				view.bottomline < target.line
@@ -178,7 +178,7 @@ local function generate_targets(cmd, flags)
 				break
 			end
 
-			-- Do not add initial cursor position to the targets.
+			-- Do not add initial cursor position to the target list.
 			if
 				target.win == cur_win and
 				target.line == cur_line and
@@ -220,7 +220,7 @@ local function JumpMotion(cmd, flags)
 
 	local targets = generate_targets(cmd, flags)
 
-	-- After targets have been generated to avoid interfering with ".".
+	-- Set them after targets have been generated to avoid interfering with ".".
 	Vset('opfunc', 'v:lua.jumpmotion_noop')
 	Vcmd('silent! normal! g@:\n')
 	Vset('opfunc', 'v:lua.jumpmotion_repeat')
