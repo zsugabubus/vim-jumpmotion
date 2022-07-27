@@ -370,8 +370,13 @@ map('@', function()
 end)
 
 map('y', function()
+	local saved_win = V.nvim_get_current_win()
+	local saved_cursor = V.nvim_win_get_cursor(saved_win)
 	if JumpMotion([[/^\v%(\s*\S){3,}]] .. '\n', '0t') then
-		Vcmd('normal yy``P')
+		Vcmd('normal yy')
+		V.nvim_set_current_win(saved_win)
+		Vset_cursor(saved_win, saved_cursor)
+		Vcmd('normal P')
 	end
 end)
 
