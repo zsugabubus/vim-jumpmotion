@@ -132,6 +132,8 @@ local function generate_targets(cmd, flags)
 			})
 		end
 
+		local prev_line, prev_col
+
 		while true do
 			if type(cmd) == 'string' then
 				Vcmd('noautocmd keepjumps keeppattern silent normal ' .. cmd)
@@ -139,61 +141,65 @@ local function generate_targets(cmd, flags)
 				cmd()
 			end
 
-			-- Get target at the cursor position.
+			-- Target is at the cursor position.
 			local line, col = unpack(V.nvim_win_get_cursor(0))
-			local target = {
+
+			-- Do not add same target twice. Also to avoid infinite loops.
+			local target_id = ('%d:%d:%d'):format(buf, line, col)
+			if target_set[target_id] then
+				break
+			end
+			target_set[target_id] = true
+
+			-- Skip non-visible portion of a line.
+			if not opt_wrap then
+				if col < view.leftcol then
+					if prev_line == line then
+						Vset_cursor(0, {
+							line,
+							prev_col <= col and view.leftcol or 0
+						})
+					end
+					goto continue
+				end
+
+				if view.rightcol < col then
+					if prev_line == line then
+						Vset_cursor(0, {
+							line,
+							prev_col <= col and 999999 or view.rightcol
+						})
+					end
+					goto continue
+				end
+			end
+
+			-- Finish when out of the viewport on the top or on the bottom.
+			if
+				line < view.topline or
+				view.bottomline < line
+			then
+				break
+			end
+
+			-- Avoid adding initial cursor position.
+			if
+				win == cur_win and
+				line == cur_line and
+				col == cur_col
+			then
+				goto continue
+			end
+
+			targets[#targets + 1] = {
 				win=win,
 				buf=buf,
 				line=line,
 				col=col,
 			}
 
-			-- Do not add same target twice.
-			local target_id = ('%d:%d:%d')
-				:format(buf, target.line, target.col)
-			if target_set[target_id] then
-				break
-			end
-			target_set[target_id] = true
-
-			if not opt_wrap then
-				-- Avoid scanning remaining line when out of the viewport on the left or
-				-- on the right sides.
-				if
-					target.col < view.leftcol
-				then
-					Vset_cursor(0, {target.line, 0})
-					goto continue
-				end
-
-				if
-					view.rightcol < target.col
-				then
-					Vset_cursor(0, {target.line, 999999})
-					goto continue
-				end
-			end
-
-			-- Top scanning when out of the viewport on the top or on the bottom.
-			if
-				target.line < view.topline or
-				view.bottomline < target.line
-			then
-				break
-			end
-
-			-- Do not add initial cursor position to the target list.
-			if
-				target.win == cur_win and
-				target.line == cur_line and
-				target.col == cur_col
-			then
-				goto continue
-			end
-
-			targets[#targets + 1] = target
-
 			::continue::
+			prev_line, prev_col = line, col
 		end
 
 		Vcall('winrestview', {view})
