@@ -106,7 +106,7 @@ end
 local function generate_targets(cmd, flags)
 	local targets = {}
 
-	local saved_so = Vget('scrolloff')
+	local saved_opt_scrolloff = Vget('scrolloff')
 	Vset('scrolloff', 0)
 
 	local cur_win, cur_line, cur_col =
@@ -122,6 +122,8 @@ local function generate_targets(cmd, flags)
 		local view = Vcall('winsaveview', {})
 		view.bottomline = Vcall('line', {'w$'})
 		view.rightcol = view.leftcol + Vcall('winwidth', {0}) - 1
+
+		local opt_wrap = V.nvim_win_get_option(win, 'wrap')
 
 		if flags:find('0') then
 			Vset_cursor(0, {
@@ -154,20 +156,22 @@ local function generate_targets(cmd, flags)
 			end
 			target_set[target_id] = true
 
-			-- Avoid scanning remaining line when out of the viewport on the left or
-			-- on the right sides.
-			if
-				target.col < view.leftcol
-			then
-				Vset_cursor(0, {target.line, 0})
-				goto continue
-			end
+			if not opt_wrap then
+				-- Avoid scanning remaining line when out of the viewport on the left or
+				-- on the right sides.
+				if
+					target.col < view.leftcol
+				then
+					Vset_cursor(0, {target.line, 0})
+					goto continue
+				end
 
-			if
-				view.rightcol < target.col
-			then
-				Vset_cursor(0, {target.line, 999999})
-				goto continue
+				if
+					view.rightcol < target.col
+				then
+					Vset_cursor(0, {target.line, 999999})
+					goto continue
+				end
 			end
 
 			-- Top scanning when out of the viewport on the top or on the bottom.
@@ -206,7 +210,7 @@ local function generate_targets(cmd, flags)
 		end
 	end
 
-	Vset('scrolloff', saved_so)
+	Vset('scrolloff', saved_opt_scrolloff)
 
 	return targets
 end
