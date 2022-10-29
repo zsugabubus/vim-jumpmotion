@@ -1,133 +1,119 @@
-local V = vim.api
-local Vcall = V.nvim_call_function
-local Vcmd = V.nvim_command
-local Vset = V.nvim_set_option
-local Vget = V.nvim_get_option
-local Vset_cursor = V.nvim_win_set_cursor
+-- XXX: vim.cmd() does not work in all cases. Use api.nvim_command() instead.
 
-local ns = V.nvim_create_namespace('jumpmotion')
+local api = vim.api
+local ns = api.nvim_create_namespace('jumpmotion')
 
 local function getchar()
-	local nr = Vcall('getchar', {})
+	local nr = vim.fn.getchar()
 	if nr == 27 then
 		error('user interrupted')
 	end
-	return Vcall('nr2char', {nr})
+	return vim.fn.nr2char(nr)
 end
 
 local function update_extmarks(targets)
-	for _, target in ipairs(targets) do
-		target.extmark_id = V.nvim_buf_set_extmark(
-			target.buf, ns, target.line - 1, target.col, {
-				id=target.extmark_id,
-				virt_text={
-					{target.key:sub(1, 1), 'JumpMotionHead'},
+	for _, t in ipairs(targets) do
+		t.extmark_id = api.nvim_buf_set_extmark(
+			t.buf,
+			ns,
+			t.line - 1,
+			t.col,
+			{
+				id = t.extmark_id,
+				virt_text = {
+					{t.key:sub(1, 1), 'JumpMotionHead'},
 					-- Empty virtual text makes Nvim confused.
-					1 < #target.key
-						and {target.key:sub(2), 'JumpMotionTail'}
-						or nil,
+					1 < #t.key and {t.key:sub(2), 'JumpMotionTail'} or nil,
 				},
-				virt_text_pos='overlay',
-				priority=1000 + #targets
-			})
+				virt_text_pos = 'overlay',
+				priority = 1000 + #targets
+			}
+		)
 	end
 end
 
 local function generate_keys(targets)
 	local a, z = string.byte('a'), string.byte('z')
 	local n = 1
-	for _, target in ipairs(targets) do
-		if not target.key then
-			local i = n
-			target.key = ''
-			while 0 < i do
-				i = i - 1
-				target.key = string.char(a + i % (z - a + 1)) .. target.key
-				i = math.floor(i / (z - a + 1))
-			end
-			n = n + 1
+	for _, t in ipairs(targets) do
+		local k = n
+		n = n + 1
+		t.key = ''
+		while 0 < k do
+			k = k - 1
+			t.key = string.char(a + k % (z - a + 1)) .. t.key
+			k = math.floor(k / (z - a + 1))
 		end
 	end
 end
 
-local function jump(targets)
-	generate_keys(targets)
-
+local function choose_target(targets)
 	while 1 < #targets do
 		update_extmarks(targets)
-		Vcmd(('echon "jumpmotion: (%d targets)"')
-			:format(#targets))
-		Vcmd('redraw')
+		vim.cmd.echon(('"jumpmotion: (%d targets)"'):format(#targets))
+		vim.cmd.redraw()
 
 		local ok, char = pcall(getchar)
 		if not ok then
-			char = ' '
+			char = '?'
 		end
 
-		Vcmd('echomsg ""')
+		vim.cmd.echomsg('""')
 
-		local tmp_targets = {}
-		for _, target in ipairs(targets) do
-			if target.key:sub(1, #char) == char then
-				target.key = target.key:sub(#char + 1)
-				if target.key == '' then
-					target.key = ' '
+		local old_targets = targets
+		targets = {}
+		for _, t in ipairs(old_targets) do
+			if t.key:sub(1, #char) == char then
+				t.key = t.key:sub(#char + 1)
+				if t.key == '' then
+					t.key = ' '
 				end
-				tmp_targets[#tmp_targets + 1] = target
+				targets[#targets + 1] = t
 			else
-				V.nvim_buf_del_extmark(target.buf, ns, target.extmark_id)
+				api.nvim_buf_del_extmark(t.buf, ns, t.extmark_id)
 			end
 		end
-		targets = tmp_targets
 	end
 
-	local target = targets[1]
-	if not target then
-		Vcmd('echohl ErrorMsg|echo "jumpmotion: No matches."|echohl None')
-		return false
+	local t = targets[1]
+	if not t then
+		vim.cmd [[
+			echohl ErrorMsg
+			echo "jumpmotion: No matches."
+			echohl None
+		]]
+		return
 	end
 
-	if target.extmark_id then
-		V.nvim_buf_del_extmark(target.buf, ns, target.extmark_id)
+	if t.extmark_id ~= nil then
+		api.nvim_buf_del_extmark(t.buf, ns, t.extmark_id)
 	end
-
-	-- Push current location to jumplist.
-	Vcmd("normal! m'")
-
-	V.nvim_set_current_win(target.win)
-	Vset_cursor(target.win, {
-		target.line,
-		target.col,
-	})
-
-	return true
+	return t
 end
 
-local function generate_targets(cmd, flags)
+local function generate_targets(cmd, opts)
+	opts = opts or {}
 	local targets = {}
 
-	local saved_opt_scrolloff = Vget('scrolloff')
-	Vset('scrolloff', 0)
+	local o_scrolloff = vim.o.scrolloff
+	vim.o.scrolloff = 0
 
 	local cur_win, cur_line, cur_col =
-		V.nvim_get_current_win(),
-		unpack(V.nvim_win_get_cursor(0))
+		api.nvim_get_current_win(),
+		unpack(api.nvim_win_get_cursor(0))
 
 	local target_set = {}
 
 	local function add_win_targets()
-		local win = V.nvim_get_current_win()
-		local buf = V.nvim_win_get_buf(0)
+		local view = vim.fn.winsaveview()
+		view.bottomline = vim.fn.line('w$')
+		view.rightcol = view.leftcol + vim.fn.winwidth(0) - 1
 
-		local view = Vcall('winsaveview', {})
-		view.bottomline = Vcall('line', {'w$'})
-		view.rightcol = view.leftcol + Vcall('winwidth', {0}) - 1
+		local opt_wrap = api.nvim_win_get_option(0, 'wrap')
 
-		local opt_wrap = V.nvim_win_get_option(win, 'wrap')
-
-		if flags:find('0') then
-			Vset_cursor(0, {
-				math.max(view.topline + (flags:find('2') and -1 or 0), 1),
+		if opts.top or opts.atop then
+			api.nvim_win_set_cursor(0, {
+				math.max(view.topline + (opts.atop and -1 or 0), 1),
 				0,
 			})
 		end
@@ -136,13 +122,16 @@ local function generate_targets(cmd, flags)
 
 		while true do
 			if type(cmd) == 'string' then
-				Vcmd('noautocmd keepjumps keeppattern silent normal ' .. cmd)
+				api.nvim_command('noautocmd keepjumps keeppattern silent ' .. cmd)
 			else
 				cmd()
 			end
 
+			local win = api.nvim_get_current_win()
+			local buf = api.nvim_win_get_buf(win)
+
 			-- Target is at the cursor position.
-			local line, col = unpack(V.nvim_win_get_cursor(0))
+			local line, col = unpack(api.nvim_win_get_cursor(0))
 
 			-- Do not add same target twice. Also to avoid infinite loops.
 			local target_id = ('%d:%d:%d'):format(buf, line, col)
@@ -155,7 +144,7 @@ local function generate_targets(cmd, flags)
 			if not opt_wrap then
 				if col < view.leftcol then
 					if prev_line == line then
-						Vset_cursor(0, {
+						api.nvim_win_set_cursor(0, {
 							line,
 							prev_col <= col and view.leftcol or 0
 						})
@@ -165,7 +154,7 @@ local function generate_targets(cmd, flags)
 
 				if view.rightcol < col then
 					if prev_line == line then
-						Vset_cursor(0, {
+						api.nvim_win_set_cursor(0, {
 							line,
 							prev_col <= col and 999999 or view.rightcol
 						})
@@ -192,56 +181,61 @@ local function generate_targets(cmd, flags)
 			end
 
 			targets[#targets + 1] = {
-				win=win,
-				buf=buf,
-				line=line,
-				col=col,
+				win = win,
+				buf = buf,
+				line = line,
+				col = col,
 			}
 
 			::continue::
 			prev_line, prev_col = line, col
 		end
 
-		Vcall('winrestview', {view})
+		vim.fn.winrestview(view)
 	end
 
 	-- Ensure current window gets crawled first.
 	add_win_targets()
 
-	if flags:find('t') then
-		for _, win in ipairs(V.nvim_tabpage_list_wins(0)) do
+	if opts.windo ~= false then
+		for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
 			if win ~= cur_win then
-				V.nvim_win_call(win, add_win_targets)
+				api.nvim_win_call(win, add_win_targets)
 			end
 		end
 	end
 
-	Vset('scrolloff', saved_opt_scrolloff)
+	vim.o.scrolloff = o_scrolloff
 
 	return targets
 end
 
-local last_args
+local last_jump_args
+local function jump(cmd, opts)
+	local mode = vim.fn.mode()
 
-local function JumpMotion(cmd, flags)
-	flags = flags or ''
-
-	local mode = Vcall('mode', {})
-
-	local targets = generate_targets(cmd, flags)
-
+	local targets = generate_targets(cmd, opts)
 	-- Set them after targets have been generated to avoid interfering with ".".
-	Vset('opfunc', 'v:lua.jumpmotion_noop')
-	Vcmd('silent! normal! g@:\n')
-	Vset('opfunc', 'v:lua.jumpmotion_repeat')
-	last_args = {cmd, flags}
+	vim.o.opfunc = 'v:lua.jumpmotion_noop'
+	api.nvim_command('silent! normal! g@:\n')
+	vim.o.opfunc = 'v:lua.jumpmotion_repeat'
+	last_jump_args = {cmd, opts}
 
-	if not jump(targets) then
+	generate_keys(targets)
+
+	local t = choose_target(targets)
+	if not t then
 		return false
 	end
 
+	-- Push current location to jumplist.
+	api.nvim_command("normal! m'")
+
+	api.nvim_set_current_win(t.win)
+	api.nvim_win_set_cursor(t.win, {t.line, t.col})
+
 	if mode == 'v' or mode == 'V' then
-		Vcmd('normal! m>gv')
+		api.nvim_command('normal! m>gv')
 	end
 
 	return true
@@ -252,144 +246,136 @@ function _G.jumpmotion_noop()
 end
 
 function _G.jumpmotion_repeat()
-	JumpMotion(unpack(last_args))
-end
-
----- snip ----
-
--- Probably should be inside my init.vim.
-local mappings = {}
-
-function _G.jumpmotion_map_trampoline(lhs)
-	mappings[lhs]()
-end
-
-local function map(lhs, fn)
-	mappings[lhs] = fn
-
-	local rhs = ([[<Cmd>call v:lua.jumpmotion_map_trampoline("%s")<CR>]])
-		:format(lhs:gsub('<', '<lt>'))
-	local lhs = '<Plug>(JumpMotion)' .. lhs
-
-	for _, mode in ipairs({'n', 'v', 'o'}) do
-		vim.api.nvim_set_keymap(mode, lhs, rhs, {noremap = false})
-	end
+	jump(unpack(last_jump_args))
 end
 
 function _G.jumpmotion_opfunc()
-	JumpMotion(function()
-		Vset('opfunc', 'v:lua.jumpmotion_noop')
-		Vcmd('normal .\n')
-		Vset_cursor(0, {
-			Vcall('line', {"']"}),
-			Vcall('col', {"']"}),
+	jump(function()
+		vim.o.opfunc = 'v:lua.jumpmotion_noop'
+		api.nvim_command('normal .\n')
+		api.nvim_win_set_cursor(0, {
+			vim.fn.line("']"),
+			vim.fn.col("']"),
 		})
 	end)
 end
 
-local function escape(s)
-	return s:gsub('\\', '\\\\')
+local function bounce(cmd, there, here, opts)
+	local count = vim.v.count1
+	if jump(cmd, opts or { top = true }) then
+		api.nvim_command('normal! ' .. there:format(count))
+		api.nvim_command([[execute "normal! \<C-o>"]])
+		api.nvim_command(here)
+	end
 end
 
-for x in ('jkwbWBnpN(){};,%'):gmatch('.') do
-	map(x, function()
-		JumpMotion(x)
-	end)
-end
+do
 
-for x in ('_$'):gmatch('.') do
-	map(x, function()
-		JumpMotion('2' .. x, '02t')
-	end)
-end
+	local function map(lhs, rhs)
+		vim.keymap.set('n', '<Plug>(JumpMotion)' .. lhs, rhs)
+		vim.keymap.set('v', '<Plug>(JumpMotion)' .. lhs, rhs)
+	end
 
-for x in ('tTfF'):gmatch('.') do
-	map(x, function()
-		local ok, cmd = pcall(function()
-			return x .. getchar()
+	local function escape(s)
+		return s:gsub('\\', '\\\\')
+	end
+
+	for x in ('jkwbWBnpN(){};,%'):gmatch('.') do
+		map(x, function()
+			jump('normal ' .. x)
 		end)
-		if ok then
-			JumpMotion(cmd)
+	end
+
+	for x in ('_$'):gmatch('.') do
+		map(x, function()
+			jump('normal! 2' .. x, { atop = true })
+		end)
+	end
+
+	for x in ('tTfF'):gmatch('.') do
+		map(x, function()
+			local ok, char = pcall(getchar)
+			if ok then
+				jump('normal ' .. x .. char)
+			end
+		end)
+	end
+
+	for x in ('oO'):gmatch('.') do
+		map(x, function()
+			if jump([[normal! /\m^\s*\zs\S\S]] .. '\n', { top = true }) then
+				api.nvim_input(x)
+			end
+		end)
+	end
+
+	for _, x in ipairs({'-', '<C-w>'}) do
+		map(x, function()
+			jump('normal! :\n')
+		end)
+	end
+
+	for x in ('iI'):gmatch('.') do
+		map(x, function()
+			if jump('normal! 2_', { top = true }) then
+				vim.cmd.startinsert()
+			end
+		end)
+	end
+
+	for x in ('aA'):gmatch('.') do
+		map(x, function()
+			if jump('normal! 2$', { top = true }) then
+				vim.cmd.startinsert { bang = true }
+			end
+		end)
+	end
+
+	map('=', function()
+		jump([[normal! /\m[^~<>=]\zs=[=#?]\@!]] .. '\n', { top = true })
+	end)
+
+	map("'", function()
+		if jump([=[silent! normal! /\v['"]\zs.{-}['"]]=] .. '\n', { top = true }) then
+			api.nvim_command([=[keepjumps keeppattern silent! normal! v/\ze.['"]]=] .. '\n')
+			api.nvim_command('normal o')
 		end
 	end)
-end
 
-for x in ('oO'):gmatch('.') do
-	map(x, function()
-		if JumpMotion([[/\m^\s*\zs\S\S]] .. '\n', '0') then
-			V.nvim_input(x)
+	map('c', function()
+		if pcall(function()
+			vim.fn.setreg('/', '\\V' .. escape(getchar()))
+		end) then
+			jump('normal! n', { top = true })
 		end
 	end)
-end
 
-for _, x in ipairs({'-', '<C-w>'}) do
-	map(x, function()
-		JumpMotion(':\n', 't')
-	end)
-end
-
-for x in ('iI'):gmatch('.') do
-	map(x, function()
-		if JumpMotion('2_', '0t') then
-			Vcmd('startinsert')
+	map('s', function()
+		if pcall(function()
+			vim.fn.setreg('/', '\\V' .. escape(getchar()) .. escape(getchar()))
+		end) then
+			jump('normal! n', { top = true })
 		end
 	end)
-end
 
-for x in ('aA'):gmatch('.') do
-	map(x, function()
-		if JumpMotion('2$', '0t') then
-			Vcmd('startinsert!')
-		end
+	map('+', function()
+		jump(
+			[[normal! /\v%([<>!\-+%*/~&|=,:;(){}[\]"'`.#]{1,3}%(\D|$)|<%(or|and|not|xor)>|<begin|<end)]] .. '\n',
+			{ top = true }
+		)
 	end)
+
+	map('y', function()
+		bounce([[normal! /^\v%(\s*\S){3,}]] .. '\n', '%dyy', 'normal p')
+	end)
+
+	map('Y', function()
+		bounce([[normal! /^\s*\S]] .. '\n', 'yap', 'normal p')
+	end)
+
 end
-
-map('=', function()
-	JumpMotion([[/\m[^~<>=]\zs=[=#?]\@!]] .. '\n', '0t')
-end)
-
-map("'", function()
-	if JumpMotion([=[/\v['"]\zs.{-}['"]]=] .. '\n', '0t') then
-		Vcmd([=[keepjumps keeppattern normal v/\ze.['"]]=] .. '\n')
-		Vcmd('normal o')
-	end
-end)
-
-map('c', function()
-	if pcall(function()
-		Vcall('setreg', {'/', '\\V' .. escape(getchar())})
-	end) then
-		JumpMotion('n', '0')
-	end
-end)
-
-map('s', function()
-	if pcall(function()
-		Vcall('setreg', {'/', '\\V' .. escape(getchar()) .. escape(getchar())})
-	end) then
-		JumpMotion('n', '0')
-	end
-end)
-
-map('+', function()
-	JumpMotion([[/\v%([<>!\-+%*/~&|=,:;(){}[\]"'`.#]{1,3}%(\D|$)|<%(or|and|not|xor)>|<begin|<end)]] .. '\n', '0')
-end)
-
-map('@', function()
-	JumpMotion('n', '0t')
-end)
-
-map('y', function()
-	local saved_win = V.nvim_get_current_win()
-	local saved_cursor = V.nvim_win_get_cursor(saved_win)
-	if JumpMotion([[/^\v%(\s*\S){3,}]] .. '\n', '0t') then
-		Vcmd('normal yy')
-		V.nvim_set_current_win(saved_win)
-		Vset_cursor(saved_win, saved_cursor)
-		Vcmd('normal P')
-	end
-end)
 
 return {
-	JumpMotion=JumpMotion,
+	jump = jump,
+	bounce = bounce,
 }
