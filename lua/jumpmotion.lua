@@ -12,18 +12,18 @@ local function getchar()
 end
 
 local function update_extmarks(targets)
-	for _, t in ipairs(targets) do
-		t.extmark_id = api.nvim_buf_set_extmark(
-			t.buf,
+	for _, target in ipairs(targets) do
+		target.extmark_id = api.nvim_buf_set_extmark(
+			target.buf,
 			ns,
-			t.line - 1,
-			t.col,
+			target.line - 1,
+			target.col,
 			{
-				id = t.extmark_id,
+				id = target.extmark_id,
 				virt_text = {
-					{t.key:sub(1, 1), 'JumpMotionHead'},
+					{target.key:sub(1, 1), 'JumpMotionHead'},
 					-- Empty virtual text makes Nvim confused.
-					1 < #t.key and {t.key:sub(2), 'JumpMotionTail'} or nil,
+					1 < #target.key and {target.key:sub(2), 'JumpMotionTail'} or nil,
 				},
 				virt_text_pos = 'overlay',
 				priority = 1000 + #targets
@@ -35,13 +35,13 @@ end
 local function generate_keys(targets)
 	local a, z = string.byte('a'), string.byte('z')
 	local n = 1
-	for _, t in ipairs(targets) do
+	for _, target in ipairs(targets) do
 		local k = n
 		n = n + 1
-		t.key = ''
+		target.key = ''
 		while 0 < k do
 			k = k - 1
-			t.key = string.char(a + k % (z - a + 1)) .. t.key
+			target.key = string.char(a + k % (z - a + 1)) .. target.key
 			k = math.floor(k / (z - a + 1))
 		end
 	end
@@ -62,21 +62,21 @@ local function choose_target(targets)
 
 		local old_targets = targets
 		targets = {}
-		for _, t in ipairs(old_targets) do
-			if t.key:sub(1, #char) == char then
-				t.key = t.key:sub(#char + 1)
-				if t.key == '' then
-					t.key = ' '
+		for _, target in ipairs(old_targets) do
+			if target.key:sub(1, #char) == char then
+				target.key = target.key:sub(#char + 1)
+				if target.key == '' then
+					target.key = ' '
 				end
-				targets[#targets + 1] = t
+				targets[#targets + 1] = target
 			else
-				api.nvim_buf_del_extmark(t.buf, ns, t.extmark_id)
+				api.nvim_buf_del_extmark(target.buf, ns, target.extmark_id)
 			end
 		end
 	end
 
-	local t = targets[1]
-	if not t then
+	local target = targets[1]
+	if not target then
 		vim.cmd [[
 			echohl ErrorMsg
 			echo "jumpmotion: No matches."
@@ -85,10 +85,10 @@ local function choose_target(targets)
 		return
 	end
 
-	if t.extmark_id ~= nil then
-		api.nvim_buf_del_extmark(t.buf, ns, t.extmark_id)
+	if target.extmark_id ~= nil then
+		api.nvim_buf_del_extmark(target.buf, ns, target.extmark_id)
 	end
-	return t
+	return target
 end
 
 local function generate_targets(cmd, opts)
@@ -223,16 +223,16 @@ local function jump(cmd, opts)
 
 	generate_keys(targets)
 
-	local t = choose_target(targets)
-	if not t then
+	local target = choose_target(targets)
+	if not target then
 		return false
 	end
 
 	-- Push current location to jumplist.
 	api.nvim_command("normal! m'")
 
-	api.nvim_set_current_win(t.win)
-	api.nvim_win_set_cursor(t.win, {t.line, t.col})
+	api.nvim_set_current_win(target.win)
+	api.nvim_win_set_cursor(target.win, {target.line, target.col})
 
 	if mode == 'v' or mode == 'V' then
 		api.nvim_command('normal! m>gv')
