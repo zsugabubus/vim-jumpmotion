@@ -122,9 +122,13 @@ local function generate_targets(cmd, opts)
 
 		while true do
 			if type(cmd) == 'string' then
-				api.nvim_command('noautocmd keepjumps keeppattern silent ' .. cmd)
+				if not pcall(api.nvim_command, 'noautocmd keepjumps keeppattern silent ' .. cmd) then
+					break
+				end
 			else
-				cmd()
+				if not pcall(cmd) then
+					break
+				end
 			end
 
 			local win = api.nvim_get_current_win()
