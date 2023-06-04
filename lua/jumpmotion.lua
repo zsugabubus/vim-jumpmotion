@@ -287,21 +287,26 @@ function M.jump(...)
 	return true
 end
 
-function M.bounce(cmd, there, here, opts)
-	local count = vim.v.count1
-	if M.jump(cmd, opts or { top = true }) then
-		vim.api.normal { bang = true, args = { string.format(there, count) } }
-		vim.cmd.normal { bang = true, args = { [[\<C-o>]] } }
-		vim.api.nvim_command(here)
-	end
-end
-
 function _G._jumpmotion_noop()
 	-- Do nothing. Really.
 end
 
 function _G._jumpmotion_repeat()
 	M.jump(unpack(last_jump_args))
+end
+
+function M.jump_character()
+	if pcall(function()
+		local s = vim.fn.getcharstr()
+		vim.fn.setreg(
+			'/',
+			(s == '$' and '\\v$|' or '') ..
+			'\\V' ..
+			(s == '\\' and '\\\\' or s)
+		)
+	end) then
+		return M.jump('normal! n', { top = true })
+	end
 end
 
 return M
