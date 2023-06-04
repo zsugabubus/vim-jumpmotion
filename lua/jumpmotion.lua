@@ -144,13 +144,10 @@ local function generate_targets(cmd, opts)
 
 	local targets = {}
 	local targets_set = {}
+	local current_win = vim.api.nvim_get_current_win()
 
 	local saved_scrolloff = vim.o.scrolloff
 	vim.o.scrolloff = 0
-
-	local cur_win, cur_line, cur_col =
-		vim.api.nvim_get_current_win(),
-		unpack(vim.api.nvim_win_get_cursor(0))
 
 	local function add_win_targets()
 		local win = vim.api.nvim_get_current_win()
@@ -211,12 +208,6 @@ local function generate_targets(cmd, opts)
 				break
 			end
 
-			-- Skip initial cursor position.
-			if
-				win == cur_win and
-				line == cur_line and
-				col == cur_col
-			then
 			-- Avoid loops.
 			if targets_set[target_id] == win then
 				break
@@ -246,7 +237,7 @@ local function generate_targets(cmd, opts)
 
 	if opts.tab then
 		for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-			if win ~= cur_win then
+			if win ~= current_win then
 				vim.api.nvim_win_call(win, add_win_targets)
 			end
 		end
