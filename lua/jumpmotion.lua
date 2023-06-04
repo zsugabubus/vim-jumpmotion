@@ -153,6 +153,8 @@ local function generate_targets(cmd, opts)
 		unpack(vim.api.nvim_win_get_cursor(0))
 
 	local function add_win_targets()
+		local win = vim.api.nvim_get_current_win()
+
 		local view = vim.fn.winsaveview()
 		view.bottomline = vim.fn.line('w$')
 		view.rightcol = view.leftcol + vim.fn.winwidth(0) - 1
@@ -176,13 +178,7 @@ local function generate_targets(cmd, opts)
 			local win = vim.api.nvim_get_current_win()
 			local buf = vim.api.nvim_win_get_buf(win)
 			local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-
-			-- Do not add same target twice. Also to avoid infinite loops.
 			local target_id = string.format('%d:%d:%d', buf, line, col)
-			if targets_set[target_id] then
-				break
-			end
-			targets_set[target_id] = true
 
 			-- Skip non-visible portion of a line.
 			if not opt_wrap then
@@ -221,8 +217,15 @@ local function generate_targets(cmd, opts)
 				line == cur_line and
 				col == cur_col
 			then
+			-- Avoid loops.
+			if targets_set[target_id] == win then
+				break
+			-- Avoid duplicated targets.
+			elseif targets_set[target_id] then
+				targets_set[target_id] = win
 				goto continue
 			end
+			targets_set[target_id] = win
 
 			table.insert(targets, {
 				win = win,
