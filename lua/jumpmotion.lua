@@ -115,7 +115,7 @@ local function choose_target(targets)
 	local target = targets[1]
 	if not target then
 		vim.api.nvim_echo({
-			{'jumpmotion: No matches.', 'ErrorMsg'},
+			{'jumpmotion: No matches', 'ErrorMsg'},
 		}, false, {})
 		return
 	end
